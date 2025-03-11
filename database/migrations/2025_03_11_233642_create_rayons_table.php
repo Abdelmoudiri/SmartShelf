@@ -13,6 +13,10 @@ return new class extends Migration
     {
         Schema::create('rayons', function (Blueprint $table) {
             $table->id();
+            $table->unsignedBigInteger('numero')->unique();
+            $table->unsignedInteger('places');
+            $table->unsignedInteger('id_category');
+            $table->foreign('id_category')->references('id')->on('categories');
             $table->timestamps();
         });
     }
