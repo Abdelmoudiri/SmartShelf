@@ -3,48 +3,96 @@
 namespace App\Http\Controllers;
 
 use App\Models\Rayon;
-use App\Http\Requests\StoreRayonRequest;
-use App\Http\Requests\UpdateRayonRequest;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Validator;
 
 class RayonController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
-    public function index()
-    {
-        //
+   
+    // Create
+    public function store(Request $request){
+        $validator = Validator::make($request->all(), [
+            'numero' => 'required|integer|min:1|unique:rayons',
+            'places' => 'required|integer|min:1',
+            'id_category' => 'required|integer'
+        ]);
+
+        if($validator->fails()){
+            return response([
+                'message' => 'Champs Invalides !'
+            ]);
+        }
+
+        $validatedData = $validator->validate();
+
+        $rayon = Rayon::create($validatedData);
+
+        return response()->json([
+            'message' => 'Rayon créé avec succès',
+            'rayon' => $rayon,
+        ], 201);
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(StoreRayonRequest $request)
-    {
-        //
+    // get All
+    public function index(){
+        $rayons = Rayon::with('category')->get();
+        return response()->json($rayons->map(function($rayon) {
+            return [
+                "numero" => $rayon->numero,
+                "places" => $rayon->places,
+                "category" => $rayon->category->name,
+            ];
+        }), 200);
     }
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(Rayon $rayon)
-    {
-        //
+    // show One
+    public function show(Rayon $rayon){
+        return response()->json($rayon);
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(UpdateRayonRequest $request, Rayon $rayon)
-    {
-        //
+    // delete
+    public function destroy(Rayon $rayon){
+        $rayon->delete();
+        return response()->json([
+            "message" => "Rayon Supprimé avec Succés !" 
+        ]);
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(Rayon $rayon)
-    {
-        //
+    //update
+    public function update(Request $request, Rayon $rayon){
+        $validator = Validator::make($request->all(), [
+            'numero' => 'nullable|integer|min:1|unique:rayons',
+            'places' => 'nullable|integer|min:1',
+            'id_category' => 'nullable|integer'
+        ]);
+
+        if($validator->fails()){
+            return response([
+                'message' => 'Champs Invalides !'
+            ]);
+        }
+
+        $validatedData = $validator->validate();
+
+
+        if ($request->has('numero')) {
+            $rayon->numero = $validatedData['numero'];
+        }
+    
+        if ($request->has('places')) {
+            $rayon->places = $validatedData['places'];
+        }
+    
+        if ($request->has('id_category')) {
+            $rayon->id_category = bcrypt($validatedData['id_category']);
+        }
+    
+        $rayon->save();
+
+        return response()->json([
+            'message' => 'Rayon mis à jour avec succès',
+            'rayon' => $rayon,
+        ], 201);
     }
+
 }
