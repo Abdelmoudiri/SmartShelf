@@ -1,15 +1,14 @@
 <?php
 
-use App\Http\Controllers\OrderController;
-use App\Http\Controllers\RayonController;
-use App\Http\Controllers\UserController;
-use App\Models\Category;
-use GuzzleHttp\Middleware;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\Auth\AuthController;
-use App\Http\Controllers\CategoryController;
-use App\Http\Controllers\ProductController;
+use App\Models\User;
+use App\Http\Controllers\API\AuthController;
+use App\Http\Controllers\API\CategoryController;
+use App\Http\Controllers\API\RangeController;
+use App\Http\Controllers\API\ProductController;
+use App\Http\Controllers\API\OrderController;
+use Laravel\Sanctum\Sanctum;
 
 /*
 |--------------------------------------------------------------------------
@@ -25,38 +24,36 @@ use App\Http\Controllers\ProductController;
 Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
 });
-
-Route::post('/auth/login', [AuthController::class, 'login']);
 Route::post('/auth/register', [AuthController::class, 'register']);
 
 
-Route::group(['middleware' => ['auth:sanctum']], function(){
-    Route::post('/auth/logout', [AuthController::class, 'logout']);
-});
+Route::post('/auth/login', [AuthController::class, 'login']);
+
+Route::post('/user/logout', [AuthController::class, 'logout'])->middleware('auth:sanctum');
+
 
 Route::group(['middleware' => ['auth:sanctum','restrictRole:admin']], function(){
-    Route::apiResource('categories',CategoryController::class);
-    Route::apiResource('rayons', RayonController::class);
-    Route::apiResource('clients',UserController::class);
+Route::get('/users', [AuthController::class, 'index']);
+Route::put('/users/{user}', [AuthController::class, 'update']);
+Route::get('/users/{user}', [AuthController::class, 'show']);
+Route::delete('/users/{user}/delete', [AuthController::class, 'destroy']);
 
-    Route::post('/products',[ProductController::class,'store']);
-    Route::delete('/products/{id}',[ProductController::class,'destroy']);
-    Route::patch('/products/{id}',[ProductController::class,'update']);
-    
-    Route::patch('/clients/{id}/suspend',[UserController::class,'suspend']);
-    Route::patch('/clients/{id}/activate',[UserController::class,'activate']);
+Route::apiResource('categories', CategoryController::class);
+Route::apiResource('ranges', RangeController::class);
+Route::apiResource('products', ProductController::class);
+Route::get('ranges/{rangeId}/products', [RangeController::class, 'getProductsInRange']);
+});
+Route::group(['middleware'=>['auth:sanctum','restrictRole:client']],function(){
+Route::get('ranges/{rangeId}/products', [RangeController::class, 'getProductsInRange']);
+Route::get('range/products/promotion',[ProductController::class,'promotion']);
+Route::get('range/products/popular',[ProductController::class,'popular']);
+Route::post('/products/sale',[OrderController::class,'storeSale']);
+Route::get('/product/search', [ProductController::class, 'search']);
+
 });
 
-Route::group(['middleware' => ['auth:sanctum']], function(){
-    Route::get('/products',[ProductController::class,'index']);
-    Route::get('/products/{id}',[ProductController::class,'show']);
-    Route::get('/popular/products',[ProductController::class,'popular']);
-    Route::get('/promoted/products',[ProductController::class,'promoted']);
-    Route::post('/search/products',[ProductController::class,'search']);
-    
-    Route::get('/orders',[OrderController::class,'index']);
-});
 
-Route::group(['middleware' => ['auth:sanctum','restrictRole:custumor']], function(){
-    Route::post('/orders',[OrderController::class,'store']);
-});
+
+
+
+

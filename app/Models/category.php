@@ -4,17 +4,17 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Laravel\Sanctum\HasApiTokens;
 
 class Category extends Model
 {
-    use HasFactory,HasApiTokens;
+    use HasFactory;
+    protected $fillable=[
+    "name",
+    ] ;
 
-    protected $fillable = [
-        'name',
-    ];
+public function products(){
 
-    public function rayon(){
-        return $this->hasMany(Rayon::class,'id_category');
-    }
+    return $this->hasMany(Product::class);
+}
+
 }
